@@ -194,9 +194,9 @@
             card.className = "card";
             document.getElementById("badgeStatus").innerText = "Offline";
             document.getElementById("badgeStatus").style.backgroundColor = "#8b949e";
-            document.getElementById("statusTextミュニert") = "";
-            document.getElementById("statusText").innerText = "⚠️ ESP32 Offline / Unreachable";
-            document.getElementById("statusText").style.color = "#d29922";
+            let statusText = document.getElementById("statusText");
+            statusText.innerText = "⚠️ ESP32 Offline / Unreachable";
+            statusText.style.color = "#d29922";
         }
     }
 
@@ -206,4 +206,13 @@
             alert("Reset command successfully sent to Junction Box 1!");
             fetchData();
         } catch (error) {
-            alert("Failed to reach ESP32
+            alert("Failed to reach ESP32 for reset.");
+        }
+    }
+
+    // Poll every 2 seconds
+    setInterval(fetchData, 2000);
+    fetchData();
+</script>
+</body>
+</html>
