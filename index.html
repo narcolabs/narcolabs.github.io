@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Narco Labs</title>
+    <title>Narco Labs - Smart Meter Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -26,12 +26,16 @@
             background-color: #161b22;
             border: 1px solid #30363d;
             border-radius: 12px;
-            padding: 40px;
+            padding: 30px;
             max-width: 480px;
             width: 100%;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.3s ease;
         }
+
+        .normal { border-left: 6px solid #238636; }
+        .tripped { border-left: 6px solid #ef4444; }
 
         .badge {
             display: inline-block;
@@ -48,43 +52,158 @@
 
         h1 {
             color: #f0f6fc;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
-        p {
+        .subtitle {
             color: #8b949e;
-            font-size: 1rem;
-            line-height: 1.5;
-            margin-bottom: 28px;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .metric-box {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px 8px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #58a6ff;
+        }
+
+        .status-box {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
         }
 
         .btn {
             display: inline-block;
+            width: 100%;
             background-color: #2f81f7;
             color: #ffffff;
             text-decoration: none;
             padding: 12px 24px;
+            border: none;
             border-radius: 6px;
             font-weight: 600;
             font-size: 0.95rem;
+            cursor: pointer;
             transition: background-color 0.2s ease;
+            margin-top: 8px;
         }
 
         .btn:hover {
             background-color: #388bfd;
         }
+
+        .btn-reset {
+            background-color: #238636;
+        }
+        .btn-reset:hover {
+            background-color: #2ea043;
+        }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <span class="badge">Online</span>
+    <div class="card" id="statusCard">
+        <span class="badge" id="badgeStatus">Online</span>
         <h1>Narco Labs</h1>
-        <p>Welcome to our official hub. Projects, tools, and updates are coming soon.</p>
-        <a href="https://github.com/narcolabs" class="btn">View GitHub Profile</a>
+        <p class="subtitle">Junction Box 1 - Smart Meter Telemetry</p>
+
+        <div class="status-box" id="statusText">Connecting to ESP32...</div>
+
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <div class="metric-label">Voltage</div>
+                <div class="metric-value"><span id="volt">--</span>V</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Current</div>
+                <div class="metric-value"><span id="curr">--</span>A</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Power</div>
+                <div class="metric-value"><span id="pow">--</span>W</div>
+            </div>
+        </div>
+
+        <button id="resetBtn" class="btn btn-reset" onclick="sendReset()">System Reset</button>
+        <a href="https://github.com/narcolabs" class="btn" style="background-color: #21262d; border: 1px solid #30363d; margin-top: 12px;">View GitHub Profile</a>
     </div>
 
-</body>
-</html>
+<script>
+    // ⚠️ REPLACE THIS IP WITH YOUR ESP32'S ACTUAL LOCAL IP FROM SERIAL MONITOR
+    const esp32IP = "http://192.168.1.101";
+
+    async function fetchData() {
+        try {
+            let response = await fetch(esp32IP + "/", { mode: 'cors' });
+            let data = await response.json();
+            
+            document.getElementById("volt").innerText = data.voltage.toFixed(1);
+            document.getElementById("curr").innerText = data.current.toFixed(2);
+            document.getElementById("pow").innerText = data.power.toFixed(1);
+
+            let card = document.getElementById("statusCard");
+            let statusText = document.getElementById("statusText");
+            let badge = document.getElementById("badgeStatus");
+            let btn = document.getElementById("resetBtn");
+
+            if (data.tripped) {
+                card.className = "card tripped";
+                badge.innerText = "ALARM";
+                badge.style.backgroundColor = "#ef4444";
+                statusText.innerText = "🚨 BREACH: " + data.reason;
+                statusText.style.color = "#ef4444";
+                btn.innerText = "Remote Reset Breached Line";
+            } else {
+                card.className = "card normal";
+                badge.innerText = "Online";
+                badge.style.backgroundColor = "#238636";
+                statusText.innerText = "🟢 System Normal & Armed";
+                statusText.style.color = "#3fb950";
+                btn.innerText = "System Reset";
+            }
+        } catch (error) {
+            let card = document.getElementById("statusCard");
+            card.className = "card";
+            document.getElementById("badgeStatus").innerText = "Offline";
+            document.getElementById("badgeStatus").style.backgroundColor = "#8b949e";
+            document.getElementById("statusTextミュニert") = "";
+            document.getElementById("statusText").innerText = "⚠️ ESP32 Offline / Unreachable";
+            document.getElementById("statusText").style.color = "#d29922";
+        }
+    }
+
+    async function sendReset() {
+        try {
+            await fetch(esp32IP + "/reset", { mode: 'cors' });
+            alert("Reset command successfully sent to Junction Box 1!");
+            fetchData();
+        } catch (error) {
+            alert("Failed to reach ESP32
