@@ -36,6 +36,7 @@
 
         .normal { border-left: 6px solid #238636; }
         .tripped { border-left: 6px solid #ef4444; }
+        .no-power { border-left: 6px solid #d29922; }
 
         .badge {
             display: inline-block;
@@ -201,7 +202,6 @@
         if (!val.startsWith("http://") && !val.startsWith("https://")) {
             val = "http://" + val;
         }
-        // Remove trailing slash if entered
         val = val.replace(/\/+$/, "");
         esp32IP = val;
         document.getElementById("ipInput").value = esp32IP;
@@ -230,6 +230,13 @@
                 statusText.innerText = "🚨 BREACH: " + data.reason;
                 statusText.style.color = "#ef4444";
                 btn.innerText = "Remote Reset Breached Line";
+            } else if (!data.power_available) {
+                card.className = "card no-power";
+                badge.innerText = "No Power";
+                badge.style.backgroundColor = "#d29922";
+                statusText.innerText = "⚡ STATUS: NO POWER";
+                statusText.style.color = "#d29922";
+                btn.innerText = "System Reset";
             } else {
                 card.className = "card normal";
                 badge.innerText = "Online";
