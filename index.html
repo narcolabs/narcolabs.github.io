@@ -60,7 +60,38 @@
         .subtitle {
             color: #8b949e;
             font-size: 0.9rem;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
+        }
+
+        .ip-config {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .ip-config input {
+            flex: 1;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #f0f6fc;
+            font-size: 0.85rem;
+        }
+
+        .ip-config button {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .ip-config button:hover {
+            background-color: #30363d;
         }
 
         .metrics-grid {
@@ -135,6 +166,11 @@
         <h1>Narco Labs</h1>
         <p class="subtitle">Junction Box 1 - Smart Meter Telemetry</p>
 
+        <div class="ip-config">
+            <input type="text" id="ipInput" placeholder="http://192.168.0.15">
+            <button onclick="saveIP()">Set IP</button>
+        </div>
+
         <div class="status-box" id="statusText">Connecting to ESP32...</div>
 
         <div class="metrics-grid">
@@ -157,8 +193,21 @@
     </div>
 
 <script>
-    // ⚠️ REPLACE THIS IP WITH YOUR ESP32'S ACTUAL LOCAL IP FROM SERIAL MONITOR
-    const esp32IP = "http://192.168.0.15";
+    let esp32IP = localStorage.getItem("esp32IP") || "http://192.168.0.15";
+    document.getElementById("ipInput").value = esp32IP;
+
+    function saveIP() {
+        let val = document.getElementById("ipInput").value.trim();
+        if (!val.startsWith("http://") && !val.startsWith("https://")) {
+            val = "http://" + val;
+        }
+        // Remove trailing slash if entered
+        val = val.replace(/\/+$/, "");
+        esp32IP = val;
+        document.getElementById("ipInput").value = esp32IP;
+        localStorage.setItem("esp32IP", esp32IP);
+        fetchData();
+    }
 
     async function fetchData() {
         try {
